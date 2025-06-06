@@ -1,6 +1,9 @@
+import createWirehairModule from "./wirehair.mjs";
 import { WirehairEncoder, WirehairDecoder, Wirehair_NeedMore, Wirehair_Success } from "./wirehair_util.mjs";
 
-export async function runJsReadmeExample(Module) {
+export async function runJsReadmeExample() {
+    const Module = await createWirehairModule();
+
     // Constants from the C++ example
     const kPacketSize = 36600;
     const kMessageBytes = 250000 * 1000; // 250 MB

@@ -1,3 +1,5 @@
+import createWirehairModule from "./wirehair.mjs";
+
 // For sending messages using Wirehair in JavaScript.
 // This is designed for use with QR codes, so the default packetSize is 358 bytes.
 // (Max QR code size 2953 bytes minus a 16 byte header, divided by 8, minus 9 bytes for block headers.)
