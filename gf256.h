@@ -54,12 +54,12 @@
 // Platform/Architecture
 
 #if defined(__ARM_ARCH) || defined(__ARM_NEON) || defined(__ARM_NEON__)
-    #if !defined IOS
+    #if !defined IOS && !defined __APPLE__
         #define LINUX_ARM
     #endif
 #endif
 
-#if defined(ANDROID) || defined(IOS) || defined(LINUX_ARM) || defined(__powerpc__) || defined(__s390__)
+#if defined(ANDROID) || defined(IOS) || defined(LINUX_ARM) || defined(__powerpc__) || defined(__s390__) || defined(__APPLE__) || defined(EMSCRIPTEN)
     #define GF256_TARGET_MOBILE
 #endif // ANDROID
 
@@ -71,7 +71,7 @@
     #define GF256_ALIGN_BYTES 16
 #endif // __AVX2__
 
-#if !defined(GF256_TARGET_MOBILE)
+#if !defined(GF256_TARGET_MOBILE) || defined(EMSCRIPTEN)
     #include <tmmintrin.h> // SSSE3: _mm_shuffle_epi8
     #include <emmintrin.h> // SSE2
 #endif // GF256_TARGET_MOBILE

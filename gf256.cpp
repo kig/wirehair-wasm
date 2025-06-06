@@ -268,7 +268,7 @@ static void _cpuid(unsigned int cpu_info[4U], const unsigned int cpu_info_type)
 }
 
 #else
-#if defined(LINUX_ARM)
+#if defined(LINUX_ARM) && !defined(EMSCRIPTEN)
 static void checkLinuxARMNeonCapabilities( bool& cpuHasNeon )
 {
     auto cpufile = open("/proc/self/auxv", O_RDONLY);
