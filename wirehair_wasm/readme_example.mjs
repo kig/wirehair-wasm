@@ -268,8 +268,8 @@ export async function runJsReadmeExample() {
     console.log("JavaScript ReadmeExample finished.");
 
     // Use WirehairEncoder and WirehairDecoder classes
-    const encoder = new WirehairEncoder();
-    const decoder = new WirehairDecoder();
+    const encoder = await WirehairEncoder.create();
+    const decoder = await WirehairDecoder.create();
     const message = new Uint8Array(kMessageBytes);
     for (let i = 0; i < kMessageBytes; ++i) {
         message[i] = i % 256; // Fill message contents
@@ -352,9 +352,6 @@ export async function runJsReadmeExample() {
             "!!! FAILURE: WirehairEncoder/WirehairDecoder: Recovered data does not match original message."
         );
     }
-
-    encoder.free();
-    decoder.free();
 
     return match && cmatch; // Return true if both methods succeeded
 }
