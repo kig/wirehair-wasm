@@ -15,11 +15,9 @@ yarn add wirehair-wasm
 ### Usage Example
 
 ```javascript
-import { WirehairEncoder, WirehairDecoder, Wirehair_NeedMore, Wirehair_Success, initWirehair } from "wirehair-wasm";
+import { WirehairEncoder, WirehairDecoder, Wirehair_NeedMore, Wirehair_Success } from "wirehair-wasm";
 
 async function runExample() {
-    // Ensure WASM module is loaded and initialized
-    await initWirehair;
 
     const messageByteCount = 100000; // 100KB
     const packetByteCount = 1400;    // Standard MTU-friendly size

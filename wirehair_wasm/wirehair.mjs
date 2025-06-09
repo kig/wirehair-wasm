@@ -1,15 +1,16 @@
 import createWirehairModule from "./wirehair_core.mjs";
 
-// For sending messages using Wirehair in JavaScript.
-// This is designed for use with QR codes, so the default packetSize is 366 bytes.
-// (Max QR code size 2953 bytes minus a 16 byte header, divided by 8, minus 1 byte for block headers.)
-// Each packet has an 8 byte header with the blockId and messageLength.
-// The idea is that you can encode a message and send it over four different sizes of QR codes,
-// or include a metadata block in a QR code with a couple data blocks without much overhead.
-
 let WirehairModule = null;
 
-async function initWirehairModule() {
+/**
+ * Initializes the Wirehair WebAssembly module.
+ * This function must be called before any other Wirehair functions.
+ * It loads and initializes the WebAssembly module. If the module is already
+ * initialized, this function does nothing.
+ * @async
+ * @throws {Error} If Wirehair initialization fails.
+ */
+export async function initWirehairModule() {
     if (!WirehairModule) {
         WirehairModule = await createWirehairModule();
         const initResult = WirehairModule._wasm_wirehair_init_(2);
@@ -21,17 +22,41 @@ async function initWirehairModule() {
     }
 }
 
+/**
+ * @class WirehairEncoder
+ * Encapsulates the Wirehair encoding functionality.
+ * Use this class to encode a message into a series of packets.
+ */
 export class WirehairEncoder {
+    /**
+     * Creates an instance of WirehairEncoder.
+     * The constructor is private; use WirehairEncoder.create() instead.
+     * @private
+     */
     constructor() {
         this.module = WirehairModule;
         this.encoder = null;
     }
 
+    /**
+     * Asynchronously creates and initializes a WirehairEncoder instance.
+     * Ensures the Wirehair WebAssembly module is initialized before creating the encoder.
+     * @async
+     * @returns {Promise<WirehairEncoder>} A promise that resolves to a new WirehairEncoder instance.
+     */
     static async create() {
         await initWirehairModule();
         return new WirehairEncoder();
     }
 
+    /**
+     * Sets the message to be encoded and initializes the encoder.
+     * @param {Uint8Array} messageU8 - The message data as a Uint8Array.
+     * @param {number} [packetSizeWithHeaders=366] - The desired size of each encoded packet, including headers.
+     *                                                This will be adjusted if it's too large for the message.
+     *                                                The actual data payload size per packet will be this value minus 8 bytes for headers.
+     * @throws {Error} If WASM buffer allocation fails.
+     */
     setMessage(messageU8, packetSizeWithHeaders = 366) {
         this.messageU8 = messageU8;
         packetSizeWithHeaders = Math.min(
@@ -56,6 +81,13 @@ export class WirehairEncoder {
         this.writeLenPtr = this.module._create_buffer(4); // Allocate space for writeLen (uint32_t)
     }
 
+    /**
+     * Encodes the next block of the message.
+     * @returns {Uint8Array} A packet containing the encoded block data and headers.
+     *                       The first 4 bytes are messageBytes (total original message size),
+     *                       the next 4 bytes are the blockId, followed by the encoded data.
+     * @throws {Error} If Wirehair encoding fails.
+     */
     encode() {
         const result = this.module._wasm_wirehair_encode(
             this.encoder,
@@ -83,6 +115,10 @@ export class WirehairEncoder {
         return packet;
     }
 
+    /**
+     * Frees the resources associated with this encoder instance in the WebAssembly module.
+     * Call this method when the encoder is no longer needed to prevent memory leaks.
+     */
     free() {
         if (this.module && this.encoder) {
             this.module._wasm_wirehair_free(this.encoder);
@@ -91,17 +127,39 @@ export class WirehairEncoder {
     }
 }
 
+/**
+ * @class WirehairDecoder
+ * Encapsulates the Wirehair decoding functionality.
+ * Use this class to decode a series of packets back into the original message.
+ */
 export class WirehairDecoder {
+    /**
+     * Creates an instance of WirehairDecoder.
+     * The constructor is private; use WirehairDecoder.create() instead.
+     * @private
+     */
     constructor() {
         this.module = WirehairModule;
         this.decoder = null;
     }
 
+    /**
+     * Asynchronously creates and initializes a WirehairDecoder instance.
+     * Ensures the Wirehair WebAssembly module is initialized before creating the decoder.
+     * @async
+     * @returns {Promise<WirehairDecoder>} A promise that resolves to a new WirehairDecoder instance.
+     */
     static async create() {
         await initWirehairModule();
         return new WirehairDecoder();
     }
 
+    /**
+     * Initializes the decoder based on information from the first received packet.
+     * This is a convenience method that calls `init` with parameters extracted from the packet.
+     * @param {Uint8Array} packet - The first packet received for the message.
+     *                              It's used to determine message size and packet size.
+     */
     initFromPacket(packet) {
         const headerView = new DataView(packet.buffer, 0, 8);
         const messageBytes = headerView.getUint32(0, true);
@@ -109,6 +167,14 @@ export class WirehairDecoder {
         this.init(messageBytes, packetSizeWithHeaders);
     }
 
+    /**
+     * Initializes the decoder with the total message size and packet size.
+     * This method must be called before decoding any packets if not using `initFromPacket`.
+     * @param {number} messageBytes - The total size of the original message in bytes.
+     * @param {number} packetSizeWithHeaders - The size of each packet, including headers (typically 8 bytes).
+     *                                         The actual data payload size per packet will be this value minus 8 bytes.
+     * @throws {Error} If WASM buffer allocation for packet data fails.
+     */
     init(messageBytes, packetSizeWithHeaders) {
         this.messageBytes = messageBytes;
         this.packetSize = packetSizeWithHeaders - 8;
@@ -126,6 +192,14 @@ export class WirehairDecoder {
         this.receivedBlocks = new Set();
     }
 
+    /**
+     * Decodes a received packet.
+     * @param {Uint8Array} packet - The packet to decode. The packet should include the
+     *                              8-byte header (messageBytes, blockId).
+     * @returns {number|false} The result of the decode operation (e.g., Wirehair_Success, Wirehair_NeedMore).
+     *                         Returns `false` if the blockId has already been received.
+     * @throws {Error} If the packet's message size does not match the initialized message size.
+     */
     decode(packet) {
         const headerView = new DataView(packet.buffer, 0, 8);
         const messageBytes = headerView.getUint32(0, true);
@@ -151,6 +225,13 @@ export class WirehairDecoder {
         return result;
     }
 
+    /**
+     * Attempts to recover the original message from the decoded packets.
+     * This should be called after enough packets have been successfully decoded
+     * (i.e., when `decode` returns `Wirehair_Success`).
+     * @returns {Uint8Array} The recovered original message.
+     * @throws {Error} If WASM buffer allocation for the decoded message fails or if recovery fails.
+     */
     recover() {
         const decodedMessagePtr = this.module._create_buffer(this.messageBytes);
         if (!decodedMessagePtr) {
@@ -172,6 +253,10 @@ export class WirehairDecoder {
         return decodedMessage;
     }
 
+    /**
+     * Frees the resources associated with this decoder instance in the WebAssembly module.
+     * Call this method when the decoder is no longer needed to prevent memory leaks.
+     */
     free() {
         if (this.module && this.decoder) {
             this.module._wasm_wirehair_free(this.decoder);
@@ -180,5 +265,7 @@ export class WirehairDecoder {
     }
 }
 
+/** Indicates successful operation. */
 export const Wirehair_Success = 0;
+/** Indicates that more packets are needed to reconstruct the message. */
 export const Wirehair_NeedMore = 1;
