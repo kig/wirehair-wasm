@@ -1,6 +1,6 @@
 {
     "name": "wirehair-wasm",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "Fast and portable fountain codes in C, compiled to WebAssembly.",
     "main": "wirehair_wasm/wirehair.mjs",
     "module": "wirehair_wasm/wirehair.mjs",
@@ -8,10 +8,7 @@
     "scripts": {
         "build": "./wasm_build.sh",
         "prepublishOnly": "npm run build",
-        "install": "napa"
-    },
-    "napa": {
-        "libwirehair": "git+https://github.com/catid/wirehair"
+        "install": "rm -rf node_modules/libwirehair; git clone --depth 1 -q https://github.com/catid/wirehair node_modules/libwirehair"
     },
     "files": [
         "wirehair_wasm/wirehair.mjs",
@@ -34,8 +31,5 @@
     "homepage": "https://github.com/kig/wirehair-wasm#readme",
     "bugs": {
         "url": "https://github.com/kig/wirehair-wasm/issues"
-    },
-    "dependencies": {
-        "napa": "^3.0.0"
     }
 }
