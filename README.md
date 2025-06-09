@@ -4,6 +4,10 @@
 
 This is a WebAssembly (WASM) version of the Wirehair library, packaged for easy use in JavaScript projects (Node.js and browsers).
 
+Wirehair is a fast and efficient error correcting fountain code for sending messages over lossy transports. For example, you want to send a 1 MB file in 1 kB packets over a channel with high packet loss. With Wirehair, you can generate and send out an endless stream of packets, and a receiver only needs to receive ~1000 arbitrary packets to reconstruct the file.
+
+On an Apple M2 chip, this WebAssembly library encodes messages at up to 2.9 GB/s on a single thread, whereas decode can run at up to 900 MB/s when including the data recovery step.
+
 ### Installation
 
 ```bash
@@ -15,26 +19,36 @@ yarn add wirehair-wasm
 ### Usage Example
 
 ```javascript
-import { WirehairEncoder, WirehairDecoder, Wirehair_NeedMore, Wirehair_Success } from "wirehair-wasm";
+import { 
+    WirehairEncoder,
+    WirehairDecoder, 
+    // initWirehairModule, 
+    Wirehair_NeedMore,
+    Wirehair_Success
+} from "wirehair-wasm";
 
 async function runExample() {
-
     const messageByteCount = 100000; // 100KB
-    const packetByteCount = 1400;    // Standard MTU-friendly size
+    const packetByteCount = 1400;    // Standard MTU-friendly size, includes an 8-byte header
 
     console.log("Creating encoder...");
     const encoder = await WirehairEncoder.create();
+    // You could also create a WirehairEncoder synchronously like this:
+    // await initWirehairModule();
+    // const encoder = new WirehairEncoder();
+
     const originalMessage = new Uint8Array(messageByteCount);
     for (let i = 0; i < messageByteCount; ++i) {
         originalMessage[i] = i % 256; // Fill message with some data
     }
-    await encoder.setMessage(originalMessage, packetByteCount);
+    encoder.setMessage(originalMessage, packetByteCount);
     console.log("Encoder created and message set.");
 
     console.log("Creating decoder...");
     const decoder = await WirehairDecoder.create();
-    await decoder.init(messageByteCount, packetByteCount);
-    console.log("Decoder created and initialized.");
+    // Or new WirehairDecoder() if await initWirehairModule() has been called.
+    
+    console.log("Decoder created.");
 
     let blockId = 0;
     let packetsSent = 0;
@@ -53,6 +67,8 @@ async function runExample() {
         }
         packetsNeededToDecode++;
 
+        // The first call to decoder.decode() initializes it to the parameters read from the packet.
+        // If you wish to switch to decoding a different message, call decoder.initFromPacket(packet) first.
         const decodeResult = decoder.decode(packet);
 
         if (decodeResult === Wirehair_Success) {
@@ -100,6 +116,100 @@ runExample().catch(err => {
 });
 ```
 
+### Advanced usage
+
+If you want to use the more low-level Wirehair API, you can:
+
+```js
+import createWirehairModule from './wirehair_core.mjs';
+
+async run() {
+    const module = await createWirehairModule();
+    module._wasm_wirehair_init_(2);
+    const kMessageBytes = 100000;
+    const kPacketSize = 500;
+    const messagePtr = module._create_buffer(kMessageBytes);
+    const encoder = module._wasm_wirehair_encoder_create(
+        null,
+        messagePtr,
+        kMessageBytes,
+        kPacketSize
+    );
+    const decoder = module._wasm_wirehair_decoder_create(
+        null,
+        kMessageBytes,
+        kPacketSize
+    );
+    const writeLenPtr = module._create_buffer(4); // sizeof(uint32_t)
+    const blockDataPtr = module._create_buffer(kPacketSize);
+    let blockId = 0;
+    while (true) {
+        const encodeResult = module._wasm_wirehair_encode(
+            encoder,
+            blockId,
+            blockDataPtr,
+            kPacketSize,
+            writeLenPtr
+        );
+        const actualWriteLen = module.getValue(writeLenPtr, "i32");
+        blockId++;
+        if (Math.random() < 0.75) {
+            continue;
+        }
+        const decodeResult = module._wasm_wirehair_decode(
+            decoder,
+            blockId-1,
+            blockDataPtr,
+            actualWriteLen
+        );
+        if (decodeResult === 0) {
+            break;
+        }
+    }
+    const decodedMessagePtr = module._create_buffer(kMessageBytes);
+    const recoverResult = module._wasm_wirehair_recover(
+        decoder,
+        decodedMessagePtr,
+        kMessageBytes
+    );
+
+    module._free_buffer(messagePtr);
+    module._free_buffer(decodedMessagePtr);
+    module._free_buffer(writeLenPtr);
+    module._wasm_wirehair_free(encoder);
+    module._wasm_wirehair_free(decoder);
+
+    // See wirehair_wasm/readme_example.mjs for a full version with error handling.
+}
+run();
+```
+
+The following functions are exported to WebAssembly and can be called from JavaScript:
+- `_wasm_wirehair_result_string(result: WirehairResult): string`
+    Returns a string representation of the WirehairResult.
+- `_wasm_wirehair_init_(expected_version: number): WirehairResult`
+    Initializes the Wirehair library with the expected version.
+- `_wasm_wirehair_encoder_create(reuseOpt: WirehairCodec, message: ArrayBuffer, messageBytes: number, blockBytes: number): WirehairCodec`
+    Creates a Wirehair encoder with the given parameters.
+- `_wasm_wirehair_encode(codec: WirehairCodec, blockId: number, blockDataOut: ArrayBuffer, outBytes: number, dataBytesOut: number): WirehairResult`
+    Encodes a block of data using the specified codec.
+- `_wasm_wirehair_decoder_create(reuseOpt: WirehairCodec, messageBytes: number, blockBytes: number): WirehairCodec`
+    Creates a Wirehair decoder with the given parameters.
+- `_wasm_wirehair_decode(codec: WirehairCodec, blockId: number, blockData: ArrayBuffer, dataBytes: number): WirehairResult`
+    Decodes a block of data using the specified codec.
+- `_wasm_wirehair_recover(codec: WirehairCodec, messageOut: ArrayBuffer, messageBytes: number): WirehairResult`
+    Recovers the original message from the encoded data using the specified codec.
+- `_wasm_wirehair_free(codec: WirehairCodec): void`
+    Frees the memory allocated for the Wirehair codec.
+
+We also need utility functions to allocate memory for the message:
+- `_create_buffer(size: number): ArrayBuffer`
+    Allocates memory for the message of the specified size.
+- `_free_buffer(message: ArrayBuffer): void`
+    Frees the memory allocated for the message.
+
+
+
 ### Building from Source
 
 If you need to rebuild the WASM module from the C++ source:
@@ -107,11 +217,11 @@ If you need to rebuild the WASM module from the C++ source:
 1.  Ensure Docker is installed.
 2.  Run the build script:
     ```bash
-    ./wasm_build.sh
+    npm install
+    npm run build
     ```
-    This will compile the C++ code using Emscripten and place the output files (`wirehair.mjs`, `wirehair.wasm`) into the `wirehair_wasm` directory.
+    This will compile the C++ code using Emscripten and place the output files (`wirehair_core.mjs`) into the `wirehair_wasm` directory.
 
-The C++ source files (`gf256.cpp`, `wirehair.cpp`, `WirehairCodec.cpp`, `WirehairTools.cpp`, `test.cpp` containing WASM exports) and header files (in `include/`) are used by this build process.
 
 ## Original C Library Information
 

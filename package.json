@@ -1,6 +1,6 @@
 {
     "name": "wirehair-wasm",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "Fast and portable fountain codes in C, compiled to WebAssembly.",
     "main": "wirehair_wasm/wirehair.mjs",
     "module": "wirehair_wasm/wirehair.mjs",

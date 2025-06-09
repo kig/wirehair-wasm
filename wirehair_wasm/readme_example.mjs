@@ -302,6 +302,38 @@ export async function runJsReadmeExample() {
             `Encoded 10,000 packets in ${(endTime - startTime).toFixed(2)} ms (${(bytesPerSecond/1e6).toFixed(2)} MB/s).`
         );
     }
+    {
+        const packets = [];
+        for (let i = 0; i < 1e4; i++) {
+            packets.push(encoder.encode());
+        }
+        const startTime = performance.now();
+        let bytesDecoded = 0;
+        let numPackets = 0;
+        for (const packet of packets) {
+            const decodeResult = decoder.decode(packet);
+            bytesDecoded += packet.length-8;
+            numPackets++;
+            if (decodeResult === Wirehair_Success) {
+                break; // Decoder has enough data
+            }
+            if (decodeResult !== Wirehair_NeedMore) {
+                console.error(`Wirehair decode failed with code ${decodeResult}.`);
+                throw new Error(
+                    `Wirehair decode failed with code ${decodeResult}.`
+                );
+            }
+        }
+        decoder.recover();
+        const endTime = performance.now();
+        const bytesPerSecond = (
+            bytesDecoded / ((endTime - startTime) / 1000)
+        );
+        console.log(
+            `Decoded ${numPackets} packets in ${(endTime - startTime).toFixed(2)} ms (${(bytesPerSecond/1e6).toFixed(2)} MB/s).`
+        );
+    }
+    decoder.init(kMessageBytes, kPacketSize);
 
     const startTime = performance.now();
 
