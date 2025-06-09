@@ -1,0 +1,54 @@
+<script type="module">
+import { WirehairEncoder, WirehairDecoder, Wirehair_NeedMore, Wirehair_Success } from "./wirehair_util.mjs";
+
+async function init() {
+    const messageByteCount = 1000000;
+    const packetByteCount = 10000;
+    const encoder = await WirehairEncoder.create();
+    const message = new Uint8Array(messageByteCount);
+    for (let i = 0; i < messageByteCount; ++i) {
+        message[i] = Math.floor(Math.random() * 256); // Fill message contents
+    }
+    encoder.setMessage(message, packetByteCount);
+
+    console.log("Sending message", message);
+
+    const decoder = await WirehairDecoder.create();
+    decoder.init(messageByteCount, packetByteCount);
+
+    while (true) {
+        const packet = encoder.encode();
+        if (Math.random() > 0.5) {
+            continue; // Simulate 50% packet loss.
+        }
+
+        const decodeResult = decoder.decode(packet);
+        if (decodeResult === Wirehair_Success) {
+            break;
+        }
+        if (decodeResult !== Wirehair_NeedMore) {
+            throw new Error(
+                `Wirehair decode failed with code ${decodeResult}.`
+            );
+        }
+    }
+    const recoveredMessage = decoder.recover();
+
+    console.log("Got message", recoveredMessage);
+
+    if (message.length !== recoveredMessage.length) {
+        throw new Error("Messages are of different length");
+    }
+    for (let i = 0; i < messageByteCount; ++i) {
+        if (message[i] !== recoveredMessage[i]) {
+            throw new Error("Messages differ");
+        }
+    }
+    console.log("Sent and received messages are identical.")
+
+    encoder.free();
+    decoder.free();
+}
+
+init();
+</script>

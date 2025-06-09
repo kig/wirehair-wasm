@@ -11,7 +11,7 @@ $ serve wirehair_wasm
 $ http://localhost:3000/test.html
 ```
 
-Use the code:
+Use the code (see wirehair_wasm/index.html):
 
 ```js
 import { WirehairEncoder, WirehairDecoder, Wirehair_NeedMore, Wirehair_Success } from "./wirehair_util.mjs";
@@ -22,7 +22,7 @@ async function init() {
     const encoder = await WirehairEncoder.create();
     const message = new Uint8Array(messageByteCount);
     for (let i = 0; i < messageByteCount; ++i) {
-        message[i] = i % 256; // Fill message contents
+        message[i] = Math.floor(Math.random() * 256); // Fill message contents
     }
     encoder.setMessage(message, packetByteCount);
 
@@ -50,6 +50,8 @@ async function init() {
     encoder.free();
     decoder.free();
 }
+
+init();
 ```
 
 ## Fast and Portable Fountain Codes in C
