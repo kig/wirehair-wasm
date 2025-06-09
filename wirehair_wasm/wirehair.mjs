@@ -201,6 +201,9 @@ export class WirehairDecoder {
      * @throws {Error} If the packet's message size does not match the initialized message size.
      */
     decode(packet) {
+        if (!this.decoder) {
+            this.initFromPacket(packet);
+        }
         const headerView = new DataView(packet.buffer, 0, 8);
         const messageBytes = headerView.getUint32(0, true);
         const blockId = headerView.getUint32(4, true);
