@@ -1,0 +1,36 @@
+# Source files
+*.cpp
+*.h
+include/
+gf256.*
+wirehair.*
+WirehairCodec.*
+WirehairTools.*
+
+# Build script
+wasm_build.sh
+
+# Test files (if any, that are not part of the package)
+test.html
+readme_example.js 
+
+# Emscripten build artifacts not needed for distribution
+# (wirehair.wasm and wirehair.mjs in wirehair_wasm/ are kept by 'files' in package.json)
+
+# Node modules
+node_modules/
+
+# Docker related files (if any)
+Dockerfile
+docker-compose.yml
+
+# Git specific
+.git/
+.gitignore
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Build directory if you have one separate from wirehair_wasm
+build/

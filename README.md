@@ -1,58 +1,121 @@
 # Wirehair
 
-## WebAssembly API and Usage
+## WebAssembly Package
 
-Build with Docker: `./wasm_build.sh`
+This is a WebAssembly (WASM) version of the Wirehair library, packaged for easy use in JavaScript projects (Node.js and browsers).
 
-Run example:
+### Installation
 
 ```bash
-$ serve wirehair_wasm
-$ http://localhost:3000/test.html
+npm install wirehair-wasm
+# or
+yarn add wirehair-wasm
 ```
 
-Use the code (see wirehair_wasm/index.html):
+### Usage Example
 
-```js
-import { WirehairEncoder, WirehairDecoder, Wirehair_NeedMore, Wirehair_Success } from "./wirehair_util.mjs";
+```javascript
+import { WirehairEncoder, WirehairDecoder, Wirehair_NeedMore, Wirehair_Success, initWirehair } from "wirehair-wasm";
 
-async function init() {
-    const messageByteCount = 1000000;
-    const packetByteCount = 10000;
+async function runExample() {
+    // Ensure WASM module is loaded and initialized
+    await initWirehair;
+
+    const messageByteCount = 100000; // 100KB
+    const packetByteCount = 1400;    // Standard MTU-friendly size
+
+    console.log("Creating encoder...");
     const encoder = await WirehairEncoder.create();
-    const message = new Uint8Array(messageByteCount);
+    const originalMessage = new Uint8Array(messageByteCount);
     for (let i = 0; i < messageByteCount; ++i) {
-        message[i] = Math.floor(Math.random() * 256); // Fill message contents
+        originalMessage[i] = i % 256; // Fill message with some data
     }
-    encoder.setMessage(message, packetByteCount);
+    await encoder.setMessage(originalMessage, packetByteCount);
+    console.log("Encoder created and message set.");
 
+    console.log("Creating decoder...");
     const decoder = await WirehairDecoder.create();
-    decoder.init(messageByteCount, packetByteCount);
+    await decoder.init(messageByteCount, packetByteCount);
+    console.log("Decoder created and initialized.");
 
+    let blockId = 0;
+    let packetsSent = 0;
+    let packetsNeededToDecode = 0;
+
+    console.log("Starting encoding/decoding loop...");
     while (true) {
-        const packet = encoder.encode();
-        if (Math.random() > 0.5) {
-            continue; // Simulate 50% packet loss.
+        blockId++;
+        packetsSent++;
+        const packet = encoder.encode(blockId);
+
+        // Simulate ~30% packet loss
+        if (Math.random() < 0.3) {
+            // console.log(`Simulated loss for packet ID ${packet.id}`);
+            continue;
         }
+        packetsNeededToDecode++;
 
         const decodeResult = decoder.decode(packet);
+
         if (decodeResult === Wirehair_Success) {
+            console.log(`Decode successful with packet ID ${packet.id}!`);
             break;
         }
         if (decodeResult !== Wirehair_NeedMore) {
             throw new Error(
-                `Wirehair decode failed with code ${decodeResult}.`
+                `Wirehair decode failed with code ${decodeResult} for packet ID ${packet.id}.`
             );
         }
+        // else, we need more packets
     }
+
+    console.log("Recovering message...");
     const recoveredMessage = decoder.recover();
+    console.log(`Message recovered. Sent ${packetsSent} packets, used ${packetsNeededToDecode} packets for decoding.`);
+
+    // Verify recovered message
+    let match = true;
+    if (recoveredMessage.byteLength !== originalMessage.byteLength) {
+        match = false;
+    } else {
+        for (let i = 0; i < originalMessage.byteLength; i++) {
+            if (recoveredMessage[i] !== originalMessage[i]) {
+                match = false;
+                break;
+            }
+        }
+    }
+
+    if (match) {
+        console.log("SUCCESS: Recovered message matches the original message!");
+    } else {
+        console.error("FAILURE: Recovered message does NOT match the original message.");
+    }
 
     encoder.free();
     decoder.free();
+    console.log("Encoder and Decoder freed.");
 }
 
-init();
+runExample().catch(err => {
+    console.error("Example run failed:", err);
+});
 ```
+
+### Building from Source
+
+If you need to rebuild the WASM module from the C++ source:
+
+1.  Ensure Docker is installed.
+2.  Run the build script:
+    ```bash
+    ./wasm_build.sh
+    ```
+    This will compile the C++ code using Emscripten and place the output files (`wirehair.mjs`, `wirehair.wasm`) into the `wirehair_wasm` directory.
+
+The C++ source files (`gf256.cpp`, `wirehair.cpp`, `WirehairCodec.cpp`, `WirehairTools.cpp`, `test.cpp` containing WASM exports) and header files (in `include/`) are used by this build process.
+
+## Original C Library Information
 
 ## Fast and Portable Fountain Codes in C
 

@@ -61,3 +61,5 @@ Temporary Items
 
 #Build cmake dir
 build
+
+node_modules

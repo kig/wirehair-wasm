@@ -1,5 +1,5 @@
-import createWirehairModule from "./wirehair.mjs";
-import { WirehairEncoder, WirehairDecoder, Wirehair_NeedMore, Wirehair_Success } from "./wirehair_util.mjs";
+import createWirehairModule from "./wirehair_core.mjs";
+import { WirehairEncoder, WirehairDecoder, Wirehair_NeedMore, Wirehair_Success } from "./wirehair.mjs";
 
 export async function runJsReadmeExample() {
     const Module = await createWirehairModule();
