@@ -8,7 +8,7 @@ if [[ "$(uname -m)" == "aarch64" || "$(uname -m)" == "arm64" ]]; then
 fi
 
 docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) emscripten/emsdk$TAG emcc \
-    wirehair_wasm.cpp -o wirehair_wasm/wirehair_core.mjs \
+    wirehair_wasm.cpp -o dist/wirehair_core.mjs \
     -s ENVIRONMENT=web -s MALLOC=emmalloc -s FILESYSTEM=0 \
     -s SINGLE_FILE=1 \
     -s MODULARIZE=1 -s EXPORT_ES6=1 -s ALLOW_MEMORY_GROWTH=1 \

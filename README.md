@@ -123,14 +123,17 @@ runExample().catch(err => {
 If you want to use the more low-level Wirehair API, you can:
 
 ```js
-import createWirehairModule from './wirehair_core.mjs';
+import createWirehairModule from 'wirehair-wasm/dist/wirehair_core.mjs';
 
-async run() {
+async function run() {
     const module = await createWirehairModule();
     module._wasm_wirehair_init_(2);
     const kMessageBytes = 100000;
     const kPacketSize = 500;
     const messagePtr = module._create_buffer(kMessageBytes);
+    for (let i = 0; i < kMessageBytes; i++) {
+        module.HEAPU8[messagePtr + i] = Math.random() * 256;
+    }
     const encoder = module._wasm_wirehair_encoder_create(
         null,
         messagePtr,
@@ -175,13 +178,20 @@ async run() {
         kMessageBytes
     );
 
+    for (let i = 0; i < kMessageBytes; i++) {
+        if (module.HEAPU8[decodedMessagePtr+i] !== module.HEAPU8[messagePtr+i]) {
+            throw new Error("Messages don't agree at " + i);
+        }
+    }
+    console.log("Successfully transmitted a message with 75% packet loss");
+
     module._free_buffer(messagePtr);
     module._free_buffer(decodedMessagePtr);
     module._free_buffer(writeLenPtr);
     module._wasm_wirehair_free(encoder);
     module._wasm_wirehair_free(decoder);
 
-    // See wirehair_wasm/readme_example.mjs for a full version with error handling.
+    // See dist/readme_example.mjs for a full version with error handling.
 }
 run();
 ```
@@ -222,7 +232,7 @@ If you need to rebuild the WASM module from the C++ source:
     npm install
     npm run build
     ```
-    This will compile the C++ code using Emscripten and place the output files (`wirehair_core.mjs`) into the `wirehair_wasm` directory.
+    This will compile the C++ code using Emscripten and place the output files (`wirehair_core.mjs`) into the `dist` directory.
 
 
 ## Original C Library Information
