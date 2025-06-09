@@ -8,6 +8,8 @@ Wirehair is a fast and efficient error correcting fountain code for sending mess
 
 On an Apple M2 chip, this WebAssembly library encodes messages at up to 2.9 GB/s on a single thread, whereas decode can run at up to 900 MB/s when including the data recovery step.
 
+The library is around 33 kB gzipped. 
+
 ### Installation
 
 ```bash
