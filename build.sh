@@ -1,3 +1,0 @@
-#!/bin/bash
-#
-docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) emscripten/emsdk emcc wirehair_wasm.cpp -o wirehair_wasm/wirehair.mjs -s ENVIRONMENT=web -s EXPORTED_FUNCTIONS='["_wasm_wirehair_result_string", "_wasm_wirehair_init_", "_create_buffer", "_free_buffer", "_wasm_wirehair_encoder_create", "_wasm_wirehair_encode", "_wasm_wirehair_decoder_create", "_wasm_wirehair_decode", "_wasm_wirehair_recover", "_wasm_wirehair_encoder_free", "_wasm_wirehair_decoder_free", "_test"]' -s MODULARIZE=1 -s EXPORT_ES6=1 -s EXPORT_NAME='createWirehairModule' -s ALLOW_MEMORY_GROWTH=1 -I include -s EXPORTED_RUNTIME_METHODS='[HEAPU8,getValue,UTF8ToString]' --std=c++11 -O3 -msimd128 -mavx2 gf256.cpp wirehair.cpp WirehairCodec.cpp WirehairTools.cpp

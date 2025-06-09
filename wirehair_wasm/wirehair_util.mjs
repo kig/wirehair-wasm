@@ -6,21 +6,29 @@ import createWirehairModule from "./wirehair.mjs";
 // Each packet has an 8 byte header with the blockId and messageLength.
 // The idea is that you can encode a message and send it over four different sizes of QR codes,
 // or include a metadata block in a QR code with a couple data blocks without much overhead.
+
+let WirehairModule = null;
+
+async function initWirehairModule() {
+    if (!WirehairModule) {
+        WirehairModule = await createWirehairModule();
+        const initResult = WirehairModule._wasm_wirehair_init_(2);
+        if (initResult !== Wirehair_Success) {
+            throw new Error(
+                `Wirehair initialization failed with code ${initResult}.`
+            );
+        }
+    }
+}
+
 export class WirehairEncoder {
     constructor() {
-        this.module = WirehairEncoder.module;
+        this.module = WirehairModule;
+        this.encoder = null;
     }
 
     static async create() {
-        if (!WirehairEncoder.module) {
-            WirehairEncoder.module = await createWirehairModule();
-            const initResult = WirehairEncoder.module._wasm_wirehair_init_(2);
-            if (initResult !== Wirehair_Success) {
-                throw new Error(
-                    `Wirehair initialization failed with code ${initResult}.`
-                );
-            }
-        }
+        await initWirehairModule();
         return new WirehairEncoder();
     }
 
@@ -32,19 +40,14 @@ export class WirehairEncoder {
         );
         this.packetSize = packetSizeWithHeaders - 8;
         this.blockId = 0;
-        const initResult = this.module._wasm_wirehair_init_(2);
-        if (initResult !== Wirehair_Success) {
-            throw new Error(
-                `Wirehair initialization failed with code ${initResult}.`
-            );
-        }
         this.messagePtr = this.module._create_buffer(messageU8.length);
         if (!this.messagePtr) {
             throw new Error("Failed to allocate message buffer in WASM.");
         }
         this.messageBytes = messageU8.length;
         this.module.HEAPU8.set(messageU8, this.messagePtr);
-        this.module._wasm_wirehair_encoder_create(
+        this.encoder = this.module._wasm_wirehair_encoder_create(
+            this.encoder,
             this.messagePtr,
             this.messageBytes,
             this.packetSize
@@ -55,6 +58,7 @@ export class WirehairEncoder {
 
     encode() {
         const result = this.module._wasm_wirehair_encode(
+            this.encoder,
             this.blockId,
             this.dataPtr,
             this.packetSize,
@@ -80,27 +84,21 @@ export class WirehairEncoder {
     }
 
     free() {
-        if (this.module) {
-            this.module._wasm_wirehair_encoder_free();
+        if (this.module && this.encoder) {
+            this.module._wasm_wirehair_free(this.encoder);
+            this.encoder = null;
         }
     }
 }
 
 export class WirehairDecoder {
     constructor() {
-        this.module = WirehairDecoder.module;
+        this.module = WirehairModule;
+        this.decoder = null;
     }
 
     static async create() {
-        if (!WirehairDecoder.module) {
-            WirehairDecoder.module = await createWirehairModule();
-            const initResult = WirehairDecoder.module._wasm_wirehair_init_(2);
-            if (initResult !== Wirehair_Success) {
-                throw new Error(
-                    `Wirehair initialization failed with code ${initResult}.`
-                );
-            }
-        }
+        await initWirehairModule();
         return new WirehairDecoder();
     }
 
@@ -114,7 +112,8 @@ export class WirehairDecoder {
     init(messageBytes, packetSizeWithHeaders) {
         this.messageBytes = messageBytes;
         this.packetSize = packetSizeWithHeaders - 8;
-        this.module._wasm_wirehair_decoder_create(
+        this.decoder = this.module._wasm_wirehair_decoder_create(
+            this.decoder,
             messageBytes,
             this.packetSize
         );
@@ -144,6 +143,7 @@ export class WirehairDecoder {
         this.module.HEAPU8.set(new Uint8Array(packet.buffer, 8), this.dataPtr);
 
         const result = this.module._wasm_wirehair_decode(
+            this.decoder,
             blockId,
             this.dataPtr,
             packet.length - 8
@@ -157,6 +157,7 @@ export class WirehairDecoder {
             throw new Error("Failed to allocate buffer for decoded message.");
         }
         const result = this.module._wasm_wirehair_recover(
+            this.decoder,
             decodedMessagePtr,
             this.messageBytes
         );
@@ -169,6 +170,13 @@ export class WirehairDecoder {
             this.messageBytes
         );
         return decodedMessage;
+    }
+
+    free() {
+        if (this.module && this.decoder) {
+            this.module._wasm_wirehair_free(this.decoder);
+            this.decoder = null;
+        }
     }
 }
 

@@ -291,42 +291,34 @@ void free_buffer(int buffer) {
     free((void *)buffer);
 }
 
-static WirehairCodec encoder;
-static WirehairCodec decoder;
-
 EMSCRIPTEN_KEEPALIVE
-void wasm_wirehair_encoder_create(uint8_t* message, int messageBytes, int blockBytes) {
-    encoder = wirehair_encoder_create(encoder, message, messageBytes, blockBytes);
+WirehairCodec wasm_wirehair_encoder_create(WirehairCodec encoder, uint8_t* message, int messageBytes, int blockBytes) {
+    return wirehair_encoder_create(encoder, message, messageBytes, blockBytes);
 }
 
 EMSCRIPTEN_KEEPALIVE
-int wasm_wirehair_encode(int blockId, uint8_t* blockDataOut, int outBytes, uint32_t* dataBytesOut) {
+int wasm_wirehair_encode(WirehairCodec encoder, int blockId, uint8_t* blockDataOut, int outBytes, uint32_t* dataBytesOut) {
     return (int)wirehair_encode(encoder, blockId, blockDataOut, (uint32_t)outBytes, dataBytesOut);
 }
 
 EMSCRIPTEN_KEEPALIVE
-void wasm_wirehair_decoder_create(int messageBytes, int blockBytes) {
-    decoder = wirehair_decoder_create(decoder, messageBytes, blockBytes);
+WirehairCodec wasm_wirehair_decoder_create(WirehairCodec decoder, int messageBytes, int blockBytes) {
+    return wirehair_decoder_create(decoder, messageBytes, blockBytes);
 }
 
 EMSCRIPTEN_KEEPALIVE
-int wasm_wirehair_decode(int blockId, const uint8_t* blockData, int dataBytes) {
+int wasm_wirehair_decode(WirehairCodec decoder, int blockId, const uint8_t* blockData, int dataBytes) {
     return (int)wirehair_decode(decoder, blockId, blockData, (uint32_t)dataBytes);
 }
 
 EMSCRIPTEN_KEEPALIVE
-int wasm_wirehair_recover(uint8_t* messageOut, int messageBytes) {
+int wasm_wirehair_recover(WirehairCodec decoder, uint8_t* messageOut, int messageBytes) {
     return (int)wirehair_recover(decoder, messageOut, (uint32_t)messageBytes);
 }
 
 EMSCRIPTEN_KEEPALIVE
-void wasm_wirehair_encoder_free() {
-    wirehair_free(encoder);
-}
-
-EMSCRIPTEN_KEEPALIVE
-void wasm_wirehair_decoder_free() {
-    wirehair_free(decoder);
+void wasm_wirehair_free(WirehairCodec codec) {
+    wirehair_free(codec);
 }
 
 } // extern "C"

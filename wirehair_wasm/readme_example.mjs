@@ -59,7 +59,8 @@ export async function runJsReadmeExample() {
 
     // 3. Create encoder
     console.log("Creating encoder...");
-    Module._wasm_wirehair_encoder_create(
+    const _encoder = Module._wasm_wirehair_encoder_create(
+        null,
         messagePtr,
         kMessageBytes,
         kPacketSize
@@ -68,7 +69,7 @@ export async function runJsReadmeExample() {
 
     // 4. Create decoder
     console.log("Creating decoder...");
-    Module._wasm_wirehair_decoder_create(kMessageBytes, kPacketSize);
+    const _decoder = Module._wasm_wirehair_decoder_create(null, kMessageBytes, kPacketSize);
     console.log("Decoder created.");
 
     let blockIdCounter = 0;
@@ -79,8 +80,8 @@ export async function runJsReadmeExample() {
     const writeLenPtr = Module._create_buffer(4); // sizeof(uint32_t)
     if (!writeLenPtr) {
         console.error("!!! Failed to allocate memory for writeLen.");
-        Module._wasm_wirehair_encoder_free(encoder);
-        Module._wasm_wirehair_decoder_free(decoder);
+        Module._wasm_wirehair_free(_encoder);
+        Module._wasm_wirehair_free(_decoder);
         Module._free_buffer(messagePtr);
         return false;
     }
@@ -103,13 +104,14 @@ export async function runJsReadmeExample() {
                     Module._free_buffer(b.dataPtr)
                 );
                 Module._free_buffer(writeLenPtr);
-                Module._wasm_wirehair_encoder_free();
-                Module._wasm_wirehair_decoder_free();
+                Module._wasm_wirehair_free(_encoder);
+                Module._wasm_wirehair_free(_decoder);
                 Module._free_buffer(messagePtr);
                 return false;
             }
 
             const encodeResult = Module._wasm_wirehair_encode(
+                _encoder,
                 blockIdCounter,
                 blockDataPtr,
                 kPacketSize,
@@ -127,8 +129,8 @@ export async function runJsReadmeExample() {
                     Module._free_buffer(b.dataPtr)
                 ); // Free previous blocks in batch
                 Module._free_buffer(writeLenPtr);
-                Module._wasm_wirehair_encoder_free();
-                Module._wasm_wirehair_decoder_free();
+                Module._wasm_wirehair_free(_encoder);
+                Module._wasm_wirehair_free(_decoder);
                 Module._free_buffer(messagePtr);
                 return false;
             }
@@ -166,6 +168,7 @@ export async function runJsReadmeExample() {
             packetsNeeded++;
             // console.log(`Decoding block ID ${block.id}, size ${block.length}`);
             const decodeResult = Module._wasm_wirehair_decode(
+                _decoder,
                 block.id,
                 block.dataPtr,
                 block.length
@@ -185,8 +188,8 @@ export async function runJsReadmeExample() {
                 );
                 // Critical error during decode
                 Module._free_buffer(writeLenPtr);
-                Module._wasm_wirehair_encoder_free();
-                Module._wasm_wirehair_decoder_free();
+                Module._wasm_wirehair_free(_encoder);
+                Module._wasm_wirehair_free(_decoder);
                 Module._free_buffer(messagePtr);
                 return false;
             }
@@ -205,13 +208,14 @@ export async function runJsReadmeExample() {
         console.error("!!! Failed to allocate buffer for decoded message.");
         // Perform cleanup
         Module._free_buffer(writeLenPtr);
-        Module._wasm_wirehair_encoder_free();
-        Module._wasm_wirehair_decoder_free();
+        Module._wasm_wirehair_free(_encoder);
+        Module._wasm_wirehair_free(_decoder);
         Module._free_buffer(messagePtr);
         return false;
     }
 
     const recoverResult = Module._wasm_wirehair_recover(
+        _decoder,
         decodedMessagePtr,
         kMessageBytes
     );
@@ -219,8 +223,8 @@ export async function runJsReadmeExample() {
         logWirehairResult("wirehair_recover", recoverResult);
         Module._free_buffer(decodedMessagePtr);
         Module._free_buffer(writeLenPtr);
-        Module._wasm_wirehair_encoder_free();
-        Module._wasm_wirehair_decoder_free();
+        Module._wasm_wirehair_free(_encoder);
+        Module._wasm_wirehair_free(_decoder);
         Module._free_buffer(messagePtr);
         return false;
     }
@@ -262,8 +266,8 @@ export async function runJsReadmeExample() {
     Module._free_buffer(messagePtr);
     Module._free_buffer(decodedMessagePtr);
     Module._free_buffer(writeLenPtr);
-    Module._wasm_wirehair_encoder_free();
-    Module._wasm_wirehair_decoder_free();
+    Module._wasm_wirehair_free(_encoder);
+    Module._wasm_wirehair_free(_decoder);
 
     console.log("JavaScript ReadmeExample finished.");
 
