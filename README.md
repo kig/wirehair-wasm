@@ -1,4 +1,57 @@
 # Wirehair
+
+## WebAssembly API and Usage
+
+Build with Docker: `./wasm_build.sh`
+
+Run example:
+
+```bash
+$ serve wirehair_wasm
+$ http://localhost:3000/test.html
+```
+
+Use the code:
+
+```js
+import { WirehairEncoder, WirehairDecoder, Wirehair_NeedMore, Wirehair_Success } from "./wirehair_util.mjs";
+
+async function init() {
+    const messageByteCount = 1000000;
+    const packetByteCount = 10000;
+    const encoder = await WirehairEncoder.create();
+    const message = new Uint8Array(messageByteCount);
+    for (let i = 0; i < messageByteCount; ++i) {
+        message[i] = i % 256; // Fill message contents
+    }
+    encoder.setMessage(message, packetByteCount);
+
+    const decoder = await WirehairDecoder.create();
+    decoder.init(messageByteCount, packetByteCount);
+
+    while (true) {
+        const packet = encoder.encode();
+        if (Math.random() > 0.5) {
+            continue; // Simulate 50% packet loss.
+        }
+
+        const decodeResult = decoder.decode(packet);
+        if (decodeResult === Wirehair_Success) {
+            break;
+        }
+        if (decodeResult !== Wirehair_NeedMore) {
+            throw new Error(
+                `Wirehair decode failed with code ${decodeResult}.`
+            );
+        }
+    }
+    const recoveredMessage = decoder.recover();
+
+    encoder.free();
+    decoder.free();
+}
+```
+
 ## Fast and Portable Fountain Codes in C
 
 Wirehair produces a stream of error correction blocks from a data source
