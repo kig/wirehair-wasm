@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Class: WirehairEncoder</title>
+    <title>JSDoc: Class: WirehairEncoderRaw</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Class: WirehairEncoder</h1>
+    <h1 class="page-title">Class: WirehairEncoderRaw</h1>
 
     
 
@@ -28,11 +28,10 @@
 
 <header>
     
-        <h2><span class="attribs"><span class="type-signature"></span></span>WirehairEncoder<span class="signature">()</span><span class="type-signature"></span></h2>
+        <h2><span class="attribs"><span class="type-signature"></span></span>WirehairEncoderRaw<span class="signature">()</span><span class="type-signature"></span></h2>
         
-            <div class="class-description">Encapsulates the Wirehair encoding functionality.
-Use this class to encode a message into a series of packets with headers,
-to be decoded by WirehairDecoder.</div>
+            <div class="class-description">Encapsulates the Wirehair encoding functionality for raw packets (no headers).
+Use this class to encode a message into a series of raw data packets.</div>
         
     
 </header>
@@ -47,111 +46,7 @@ to be decoded by WirehairDecoder.</div>
     
 
     
-    <h4 class="name" id="WirehairEncoder"><span class="type-signature"></span>new WirehairEncoder<span class="signature">()</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="wirehair.js.html">wirehair.js</a>, <a href="wirehair.js.html#line290">line 290</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-    </div>
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-        <h3 class="subsection-title">Methods</h3>
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="encode"><span class="type-signature"></span>encode<span class="signature">()</span><span class="type-signature"> &rarr; {Uint8Array}</span></h4>
+    <h4 class="name" id="WirehairEncoderRaw"><span class="type-signature"></span>new WirehairEncoderRaw<span class="signature">()</span><span class="type-signature"></span></h4>
     
 
     
@@ -159,7 +54,10 @@ to be decoded by WirehairDecoder.</div>
 
 
 <div class="description">
-    Encodes the next block of the message.
+    Creates an instance of WirehairEncoderRaw.
+Only usable after calling await initWirehairModule().
+
+Consider using WirehairEncoderRaw.create() instead.
 </div>
 
 
@@ -203,7 +101,171 @@ to be decoded by WirehairDecoder.</div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="wirehair.js.html">wirehair.js</a>, <a href="wirehair.js.html#line322">line 322</a>
+        <a href="wirehair.js.html">wirehair.js</a>, <a href="wirehair.js.html#line29">line 29</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    </div>
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Classes</h3>
+
+        <dl>
+            <dt><a href="WirehairEncoderRaw.html">WirehairEncoderRaw</a></dt>
+            <dd></dd>
+        </dl>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="encode"><span class="type-signature"></span>encode<span class="signature">(blockId)</span><span class="type-signature"> &rarr; {Uint8Array}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Encodes a block of the message with the given blockId.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>blockId</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The ID of the block to encode.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="wirehair.js.html">wirehair.js</a>, <a href="wirehair.js.html#line89">line 89</a>
     </li></ul></dd>
     
 
@@ -261,9 +323,7 @@ to be decoded by WirehairDecoder.</div>
 
         
 <div class="param-desc">
-    A packet containing the encoded block data and headers.
-                      The first 4 bytes are messageBytes (total original message size),
-                      the next 4 bytes are the blockId, followed by the encoded data.
+    A raw packet containing the encoded block data.
 </div>
 
 
@@ -292,7 +352,7 @@ to be decoded by WirehairDecoder.</div>
     
 
     
-    <h4 class="name" id="setMessage"><span class="type-signature"></span>setMessage<span class="signature">(messageU8, packetSizeWithHeaders<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="free"><span class="type-signature"></span>free<span class="signature">()</span><span class="type-signature"></span></h4>
     
 
     
@@ -300,7 +360,96 @@ to be decoded by WirehairDecoder.</div>
 
 
 <div class="description">
-    Sets the message to be encoded and initializes the encoder.
+    Frees the resources associated with this encoder instance in the WebAssembly module.
+Call this method when the encoder is no longer needed to prevent memory leaks.
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="wirehair.js.html">wirehair.js</a>, <a href="wirehair.js.html#line113">line 113</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="setMessage"><span class="type-signature"></span>setMessage<span class="signature">(messageU8, packetSize)</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Sets the message to be encoded and initializes the encoder for raw output.
 </div>
 
 
@@ -324,11 +473,7 @@ to be decoded by WirehairDecoder.</div>
         <th>Type</th>
 
         
-        <th>Attributes</th>
-        
 
-        
-        <th>Default</th>
         
 
         <th class="last">Description</th>
@@ -353,19 +498,7 @@ to be decoded by WirehairDecoder.</div>
             </td>
 
             
-                <td class="attributes">
-                
 
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
             
 
             <td class="description last">The message data as a Uint8Array.</td>
@@ -375,7 +508,7 @@ to be decoded by WirehairDecoder.</div>
 
         <tr>
             
-                <td class="name"><code>packetSizeWithHeaders</code></td>
+                <td class="name"><code>packetSize</code></td>
             
 
             <td class="type">
@@ -388,28 +521,11 @@ to be decoded by WirehairDecoder.</div>
             </td>
 
             
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
 
             
-                <td class="default">
-                
-                    366
-                
-                </td>
-            
 
-            <td class="description last">The desired size of each encoded packet, including headers.
-                                               This will be adjusted if it's too large for the message.
-                                               The actual data payload size per packet will be this value minus 8 bytes for headers.</td>
+            <td class="description last">The desired size of each encoded data payload.
+                             This will be adjusted if it's too large for the message.</td>
         </tr>
 
     
@@ -450,7 +566,7 @@ to be decoded by WirehairDecoder.</div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="wirehair.js.html">wirehair.js</a>, <a href="wirehair.js.html#line310">line 310</a>
+        <a href="wirehair.js.html">wirehair.js</a>, <a href="wirehair.js.html#line62">line 62</a>
     </li></ul></dd>
     
 
@@ -515,7 +631,7 @@ to be decoded by WirehairDecoder.</div>
     
 
     
-    <h4 class="name" id=".create"><span class="type-signature">(async, static) </span>create<span class="signature">()</span><span class="type-signature"> &rarr; {Promise.&lt;<a href="WirehairEncoder.html">WirehairEncoder</a>>}</span></h4>
+    <h4 class="name" id=".create"><span class="type-signature">(async, static) </span>create<span class="signature">()</span><span class="type-signature"> &rarr; {Promise.&lt;<a href="WirehairEncoderRaw.html">WirehairEncoderRaw</a>>}</span></h4>
     
 
     
@@ -523,7 +639,7 @@ to be decoded by WirehairDecoder.</div>
 
 
 <div class="description">
-    Asynchronously creates and initializes a WirehairEncoder instance.
+    Asynchronously creates and initializes a WirehairEncoderRaw instance.
 Ensures the Wirehair WebAssembly module is initialized before creating the encoder.
 </div>
 
@@ -568,7 +684,7 @@ Ensures the Wirehair WebAssembly module is initialized before creating the encod
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="wirehair.js.html">wirehair.js</a>, <a href="wirehair.js.html#line297">line 297</a>
+        <a href="wirehair.js.html">wirehair.js</a>, <a href="wirehair.js.html#line50">line 50</a>
     </li></ul></dd>
     
 
@@ -597,7 +713,7 @@ Ensures the Wirehair WebAssembly module is initialized before creating the encod
 
         
 <div class="param-desc">
-    A promise that resolves to a new WirehairEncoder instance.
+    A promise that resolves to a new WirehairEncoderRaw instance.
 </div>
 
 
@@ -608,7 +724,7 @@ Ensures the Wirehair WebAssembly module is initialized before creating the encod
     </dt>
     <dd>
         
-<span class="param-type">Promise.&lt;<a href="WirehairEncoder.html">WirehairEncoder</a>></span>
+<span class="param-type">Promise.&lt;<a href="WirehairEncoderRaw.html">WirehairEncoderRaw</a>></span>
 
 
     </dd>
