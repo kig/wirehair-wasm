@@ -18,6 +18,33 @@ npm install wirehair-wasm
 yarn add wirehair-wasm
 ```
 
+### Quickstart
+
+```javascript
+import { WirehairEncoder, WirehairDecoder, Wirehair_NeedMore, Wirehair_Success } from "wirehair-wasm";
+
+const encoder = await WirehairEncoder.create();
+const decoder = await WirehairDecoder.create();
+
+const message = new Uint8Array(100000);
+const packetSize = 1000;
+encoder.setMessage(message, packetSize);
+
+while (true) {
+    const packet = encoder.encode();
+    if (Math.random() > 0.5) {
+        continue; // 50% packet loss
+    }
+    const result = decoder.decode(packet);
+    if (result === Wirehair_NeedMore) {
+        continue;
+    }
+    break;
+}
+
+const receivedMessage = decoder.recover();
+```
+
 ### Usage Example
 
 ```javascript
