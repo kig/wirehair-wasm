@@ -18,10 +18,11 @@ npm install wirehair-wasm
 yarn add wirehair-wasm
 ```
 
-### Quickstart
+### Quickstart for easy-to-use API
 
 ```javascript
-import { WirehairEncoder, WirehairDecoder, Wirehair_NeedMore, Wirehair_Success } from "wirehair-wasm";
+import { WirehairEncoder, WirehairDecoder, 
+         Wirehair_NeedMore, Wirehair_Success } from "wirehair-wasm";
 
 const encoder = await WirehairEncoder.create();
 const decoder = await WirehairDecoder.create();
@@ -33,19 +34,57 @@ encoder.setMessage(message, packetSize);
 while (true) {
     const packet = encoder.encode();
     if (Math.random() > 0.5) {
-        continue; // 50% packet loss
+        // 50% packet loss
+        const result = decoder.decode(packet);
+        if (result !== Wirehair_NeedMore) {
+            break;
+        }
     }
-    const result = decoder.decode(packet);
-    if (result === Wirehair_NeedMore) {
-        continue;
-    }
-    break;
 }
 
 const receivedMessage = decoder.recover();
+encoder.free();
+decoder.free();
+
 ```
 
-### Usage Example
+### Raw API without packet headers
+
+For interacting with existing Wirehair code. Or maybe you want to transmit the message length and the block ids separately.
+
+```javascript
+import { WirehairEncoderRaw, WirehairDecoderRaw,
+         Wirehair_NeedMore, Wirehair_Success } from "wirehair-wasm";
+
+const encoder = await WirehairEncoderRaw.create();
+const decoder = await WirehairDecoderRaw.create();
+
+const message = new Uint8Array(100000);
+const packetSize = 1000;
+encoder.setMessage(message, packetSize);
+
+decoder.init(message.length, packetSize);
+
+let blockId = 0;
+while (true) {
+    const block = encoder.encode(blockId);
+    if (Math.random() > 0.5) {
+        // 50% packet loss
+        const result = decoder.decode(blockId, block);
+        if (result !== Wirehair_NeedMore) {
+            break;
+        }
+    }
+    blockId++;
+}
+
+const receivedMessage = decoder.recover();
+encoder.free();
+decoder.free();
+
+```
+
+### More Complete Usage Example
 
 ```javascript
 import { 
